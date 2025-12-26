@@ -24,6 +24,7 @@ export async function GET(request: Request) {
     const cookieStore = await cookies();
     const codeVerifier = cookieStore.get("twitter_code_verifier")?.value;
     const storedState = cookieStore.get("twitter_oauth_state")?.value;
+    const accountId = cookieStore.get("twitter_account_id")?.value;
 
     if (!codeVerifier) {
       return NextResponse.redirect(
@@ -37,7 +38,15 @@ export async function GET(request: Request) {
       );
     }
 
-    const credentials = await db.twitterCredentials.findFirst();
+    if (!accountId) {
+      return NextResponse.redirect(
+        new URL("/?error=missing_account", url.origin)
+      );
+    }
+
+    const credentials = await db.twitterCredentials.findUnique({
+      where: { accountId },
+    });
 
     if (!credentials?.clientId || !credentials?.clientSecret) {
       return NextResponse.redirect(
@@ -71,7 +80,7 @@ export async function GET(request: Request) {
 
     // Save tokens and user info
     await db.twitterCredentials.update({
-      where: { id: credentials.id },
+      where: { accountId },
       data: {
         accessToken,
         refreshToken,
@@ -88,6 +97,7 @@ export async function GET(request: Request) {
 
     response.cookies.delete("twitter_code_verifier");
     response.cookies.delete("twitter_oauth_state");
+    response.cookies.delete("twitter_account_id");
 
     return response;
   } catch (error) {

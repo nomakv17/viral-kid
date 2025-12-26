@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// Google OAuth 2.0 endpoints
-const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+// Facebook OAuth 2.0 endpoint (Instagram uses Facebook Login)
+const FACEBOOK_AUTH_URL = "https://www.facebook.com/v21.0/dialog/oauth";
 
-// YouTube API scope for posting comments
-const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl";
+// Required scopes for Instagram API (comments and messaging)
+const INSTAGRAM_SCOPES = [
+  "pages_show_list",
+  "pages_read_engagement",
+  "instagram_basic",
+  "instagram_manage_comments",
+  "instagram_manage_messages",
+  "business_management",
+].join(",");
 
 function generateState(): string {
   const array = new Uint8Array(32);
@@ -27,39 +34,37 @@ export async function GET(request: Request) {
       );
     }
 
-    const credentials = await db.youTubeCredentials.findUnique({
+    const credentials = await db.instagramCredentials.findUnique({
       where: { accountId },
     });
 
-    if (!credentials?.clientId) {
+    if (!credentials?.appId) {
       return NextResponse.json(
-        { error: "YouTube OAuth credentials not configured" },
+        { error: "Meta App credentials not configured" },
         { status: 400 }
       );
     }
 
-    const callbackUrl = `${reqUrl.origin}/api/youtube/callback`;
+    const callbackUrl = `${reqUrl.origin}/api/instagram/callback`;
 
     // Generate state for CSRF protection
     const state = generateState();
 
     // Build the authorization URL
     const authParams = new URLSearchParams({
-      client_id: credentials.clientId,
+      client_id: credentials.appId,
       redirect_uri: callbackUrl,
       response_type: "code",
-      scope: YOUTUBE_SCOPE,
-      access_type: "offline", // Request refresh token
-      prompt: "consent", // Force consent to get refresh token
+      scope: INSTAGRAM_SCOPES,
       state: state,
     });
 
-    const authUrl = `${GOOGLE_AUTH_URL}?${authParams.toString()}`;
+    const authUrl = `${FACEBOOK_AUTH_URL}?${authParams.toString()}`;
 
     // Return the auth URL and store state in cookies
     const response = NextResponse.json({ authUrl });
 
-    response.cookies.set("youtube_oauth_state", state, {
+    response.cookies.set("instagram_oauth_state", state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -68,7 +73,7 @@ export async function GET(request: Request) {
     });
 
     // Store accountId in cookie so callback knows which account to update
-    response.cookies.set("youtube_account_id", accountId, {
+    response.cookies.set("instagram_account_id", accountId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -78,7 +83,7 @@ export async function GET(request: Request) {
 
     return response;
   } catch (error) {
-    console.error("YouTube OAuth init error:", error);
+    console.error("Instagram OAuth init error:", error);
     return NextResponse.json(
       { error: "Failed to initialize OAuth" },
       { status: 500 }

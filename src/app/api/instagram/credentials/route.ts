@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const credentials = await db.youTubeCredentials.findUnique({
+    const credentials = await db.instagramCredentials.findUnique({
       where: { accountId },
     });
 
@@ -26,14 +26,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       id: credentials.id,
-      apiKey: credentials.apiKey ? "••••••••" : "",
-      clientId: credentials.clientId,
-      clientSecret: credentials.clientSecret ? "••••••••" : "",
-      channelTitle: credentials.channelTitle,
+      appId: credentials.appId,
+      appSecret: credentials.appSecret ? "••••••••" : "",
+      instagramUsername: credentials.instagramUsername,
+      facebookPageName: credentials.facebookPageName,
       isConnected: !!credentials.accessToken,
     });
   } catch (error) {
-    console.error("Failed to fetch YouTube credentials:", error);
+    console.error("Failed to fetch Instagram credentials:", error);
     return NextResponse.json(
       { error: "Failed to fetch credentials" },
       { status: 500 }
@@ -54,29 +54,27 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { apiKey, clientId, clientSecret } = body;
+    const { appId, appSecret } = body;
 
     const updateData: Record<string, string> = {};
 
-    if (apiKey !== undefined && apiKey !== "••••••••")
-      updateData.apiKey = apiKey;
-    if (clientId !== undefined) updateData.clientId = clientId;
-    if (clientSecret && clientSecret !== "••••••••")
-      updateData.clientSecret = clientSecret;
+    if (appId !== undefined) updateData.appId = appId;
+    if (appSecret && appSecret !== "••••••••") updateData.appSecret = appSecret;
 
-    const credentials = await db.youTubeCredentials.update({
+    const credentials = await db.instagramCredentials.update({
       where: { accountId },
       data: updateData,
     });
 
     return NextResponse.json({
       id: credentials.id,
-      clientId: credentials.clientId,
-      channelTitle: credentials.channelTitle,
+      appId: credentials.appId,
+      instagramUsername: credentials.instagramUsername,
+      facebookPageName: credentials.facebookPageName,
       isConnected: !!credentials.accessToken,
     });
   } catch (error) {
-    console.error("Failed to save YouTube credentials:", error);
+    console.error("Failed to save Instagram credentials:", error);
     return NextResponse.json(
       { error: "Failed to save credentials" },
       { status: 500 }

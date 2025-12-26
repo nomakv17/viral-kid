@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const config = await db.twitterConfiguration.findUnique({
+    const config = await db.youTubeConfiguration.findUnique({
       where: { accountId },
     });
 
@@ -26,11 +26,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       id: config.id,
-      searchTerm: config.searchTerm,
       schedule: config.schedule,
     });
   } catch (error) {
-    console.error("Failed to fetch Twitter configuration:", error);
+    console.error("Failed to fetch YouTube configuration:", error);
     return NextResponse.json(
       { error: "Failed to fetch configuration" },
       { status: 500 }
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { searchTerm, schedule } = body;
+    const { schedule } = body;
 
     // Validate schedule value
     const validSchedules = [
@@ -70,21 +69,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const config = await db.twitterConfiguration.update({
+    const config = await db.youTubeConfiguration.update({
       where: { accountId },
       data: {
-        ...(searchTerm !== undefined && { searchTerm }),
         ...(schedule && { schedule }),
       },
     });
 
     return NextResponse.json({
       id: config.id,
-      searchTerm: config.searchTerm,
       schedule: config.schedule,
     });
   } catch (error) {
-    console.error("Failed to save Twitter configuration:", error);
+    console.error("Failed to save YouTube configuration:", error);
     return NextResponse.json(
       { error: "Failed to save configuration" },
       { status: 500 }

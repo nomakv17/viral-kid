@@ -6,7 +6,8 @@ import { X, ChevronDown, Loader2 } from "lucide-react";
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  platform: "twitter" | "youtube";
+  platform: "twitter" | "youtube" | "instagram";
+  accountId: string;
 }
 
 const SCHEDULE_OPTIONS = [
@@ -134,6 +135,7 @@ export function SettingsModal({
   isOpen,
   onClose,
   platform,
+  accountId,
 }: SettingsModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [schedule, setSchedule] = useState("every_hour");
@@ -166,9 +168,16 @@ export function SettingsModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && platform === "twitter") {
+    if (isOpen && accountId) {
       setIsLoading(true);
-      fetch("/api/twitter/configuration")
+      const apiPath =
+        platform === "twitter"
+          ? `/api/twitter/configuration?accountId=${accountId}`
+          : platform === "youtube"
+            ? `/api/youtube/configuration?accountId=${accountId}`
+            : `/api/instagram/configuration?accountId=${accountId}`;
+
+      fetch(apiPath)
         .then((res) => {
           if (!res.ok) throw new Error("API error");
           return res.json();
@@ -186,17 +195,29 @@ export function SettingsModal({
         })
         .finally(() => setIsLoading(false));
     }
-  }, [isOpen, platform]);
+  }, [isOpen, platform, accountId]);
 
   const handleSave = async () => {
-    if (platform !== "twitter") return;
+    if (!accountId) return;
 
     setIsSaving(true);
     try {
-      const res = await fetch("/api/twitter/configuration", {
+      const apiPath =
+        platform === "twitter"
+          ? `/api/twitter/configuration?accountId=${accountId}`
+          : platform === "youtube"
+            ? `/api/youtube/configuration?accountId=${accountId}`
+            : `/api/instagram/configuration?accountId=${accountId}`;
+
+      const body =
+        platform === "twitter"
+          ? JSON.stringify({ searchTerm, schedule })
+          : JSON.stringify({ schedule });
+
+      const res = await fetch(apiPath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ searchTerm, schedule }),
+        body,
       });
 
       if (!res.ok) {

@@ -13,12 +13,34 @@ datasource db {
   provider = "postgresql"
 }
 
+// Central account model - each card on the dashboard is one account
+model Account {
+  id        String   @id @default(cuid())
+  platform  String   // "twitter", "youtube", or "instagram"
+  name      String   @default("") // Optional display name for the account
+  order     Int      @default(0) // Display order on dashboard
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  twitterCredentials   TwitterCredentials?
+  twitterConfig        TwitterConfiguration?
+  youtubeCredentials   YouTubeCredentials?
+  youtubeConfig        YouTubeConfiguration?
+  instagramCredentials InstagramCredentials?
+  instagramConfig      InstagramConfiguration?
+}
+
 model TwitterConfiguration {
   id         String   @id @default(cuid())
   searchTerm String   @default("")
   schedule   String   @default("every_hour") // every_5_min, every_10_min, every_30_min, every_hour, every_3_hours, every_6_hours
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  // Relation to Account
+  accountId  String   @unique
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model TwitterCredentials {
@@ -42,6 +64,21 @@ model TwitterCredentials {
   // Timestamps
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Relation to Account
+  accountId   String   @unique
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model YouTubeConfiguration {
+  id         String   @id @default(cuid())
+  schedule   String   @default("every_hour") // every_5_min, every_10_min, every_30_min, every_hour, every_3_hours, every_6_hours
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relation to Account
+  accountId  String   @unique
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
 model YouTubeCredentials {
@@ -61,4 +98,42 @@ model YouTubeCredentials {
   // Timestamps
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Relation to Account
+  accountId   String   @unique
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model InstagramConfiguration {
+  id         String   @id @default(cuid())
+  schedule   String   @default("every_hour") // every_5_min, every_10_min, every_30_min, every_hour, every_3_hours, every_6_hours
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relation to Account
+  accountId  String   @unique
+  account    Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
+model InstagramCredentials {
+  id          String   @id @default(cuid())
+  // Meta App credentials (from Meta Developer Portal)
+  appId       String   @default("")
+  appSecret   String   @default("")
+  // User OAuth tokens (obtained after user login via Facebook Login)
+  accessToken       String?
+  tokenExpiresAt    DateTime?
+  // Connected Instagram Business/Creator account info
+  instagramAccountId    String?  // Instagram-scoped user ID
+  instagramUsername     String?
+  // Linked Facebook Page info (required for Instagram API)
+  facebookPageId        String?
+  facebookPageName      String?
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relation to Account
+  accountId   String   @unique
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }

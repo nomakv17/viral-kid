@@ -6,6 +6,7 @@ import { X, Loader2, Copy, Check, ExternalLink } from "lucide-react";
 interface YouTubeAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
+  accountId: string;
 }
 
 interface YouTubeCredentialsState {
@@ -181,6 +182,7 @@ function CredentialInput({
 export function YouTubeAccountModal({
   isOpen,
   onClose,
+  accountId,
 }: YouTubeAccountModalProps) {
   const [credentials, setCredentials] = useState<YouTubeCredentialsState>({
     apiKey: "",
@@ -223,9 +225,9 @@ export function YouTubeAccountModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && accountId) {
       setIsLoading(true);
-      fetch("/api/youtube/credentials")
+      fetch(`/api/youtube/credentials?accountId=${accountId}`)
         .then((res) => {
           if (!res.ok) throw new Error("API error");
           return res.json();
@@ -246,20 +248,25 @@ export function YouTubeAccountModal({
         })
         .finally(() => setIsLoading(false));
     }
-  }, [isOpen]);
+  }, [isOpen, accountId]);
 
   const handleSave = async () => {
+    if (!accountId) return;
+
     setIsSaving(true);
     try {
-      const res = await fetch("/api/youtube/credentials", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          apiKey: credentials.apiKey,
-          clientId: credentials.clientId,
-          clientSecret: credentials.clientSecret,
-        }),
-      });
+      const res = await fetch(
+        `/api/youtube/credentials?accountId=${accountId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            apiKey: credentials.apiKey,
+            clientId: credentials.clientId,
+            clientSecret: credentials.clientSecret,
+          }),
+        }
+      );
 
       if (!res.ok) {
         throw new Error("Failed to save credentials");
@@ -274,9 +281,11 @@ export function YouTubeAccountModal({
   };
 
   const handleConnect = async () => {
+    if (!accountId) return;
+
     setIsConnecting(true);
     try {
-      const res = await fetch("/api/youtube/auth");
+      const res = await fetch(`/api/youtube/auth?accountId=${accountId}`);
       const data = await res.json();
 
       if (data.authUrl) {

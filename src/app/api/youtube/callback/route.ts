@@ -29,6 +29,7 @@ export async function GET(request: Request) {
 
     const cookieStore = await cookies();
     const storedState = cookieStore.get("youtube_oauth_state")?.value;
+    const accountId = cookieStore.get("youtube_account_id")?.value;
 
     if (state !== storedState) {
       return NextResponse.redirect(
@@ -36,7 +37,15 @@ export async function GET(request: Request) {
       );
     }
 
-    const credentials = await db.youTubeCredentials.findFirst();
+    if (!accountId) {
+      return NextResponse.redirect(
+        new URL("/?error=youtube_missing_account", url.origin)
+      );
+    }
+
+    const credentials = await db.youTubeCredentials.findUnique({
+      where: { accountId },
+    });
 
     if (!credentials?.clientId || !credentials?.clientSecret) {
       return NextResponse.redirect(
@@ -100,7 +109,7 @@ export async function GET(request: Request) {
 
     // Save tokens and channel info
     await db.youTubeCredentials.update({
-      where: { id: credentials.id },
+      where: { accountId },
       data: {
         accessToken: access_token,
         refreshToken: refresh_token,
@@ -110,12 +119,13 @@ export async function GET(request: Request) {
       },
     });
 
-    // Clear the OAuth cookie
+    // Clear the OAuth cookies
     const response = NextResponse.redirect(
       new URL("/?success=youtube_connected", url.origin)
     );
 
     response.cookies.delete("youtube_oauth_state");
+    response.cookies.delete("youtube_account_id");
 
     return response;
   } catch (error) {

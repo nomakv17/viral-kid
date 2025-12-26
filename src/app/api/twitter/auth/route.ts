@@ -3,9 +3,21 @@ import { TwitterApi } from "twitter-api-v2";
 import { db } from "@/lib/db";
 import { headers } from "next/headers";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const credentials = await db.twitterCredentials.findFirst();
+    const reqUrl = new URL(request.url);
+    const accountId = reqUrl.searchParams.get("accountId");
+
+    if (!accountId) {
+      return NextResponse.json(
+        { error: "accountId is required" },
+        { status: 400 }
+      );
+    }
+
+    const credentials = await db.twitterCredentials.findUnique({
+      where: { accountId },
+    });
 
     if (!credentials?.clientId || !credentials?.clientSecret) {
       return NextResponse.json(
@@ -38,16 +50,7 @@ export async function GET() {
       }
     );
 
-    // Store the code verifier and state in the credentials record
-    await db.twitterCredentials.update({
-      where: { id: credentials.id },
-      data: {
-        // Store temporarily in unused fields or create a separate table
-        // For simplicity, we'll use a cookie approach in the callback
-      },
-    });
-
-    // Return the auth URL and store verifier in a cookie
+    // Return the auth URL and store verifier in cookies
     const response = NextResponse.json({ authUrl: url });
 
     // Set the code verifier in a secure cookie
@@ -60,6 +63,15 @@ export async function GET() {
     });
 
     response.cookies.set("twitter_oauth_state", state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 600, // 10 minutes
+      path: "/",
+    });
+
+    // Store accountId in cookie so callback knows which account to update
+    response.cookies.set("twitter_account_id", accountId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

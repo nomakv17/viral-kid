@@ -1,14 +1,27 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    let credentials = await db.twitterCredentials.findFirst();
+    const url = new URL(request.url);
+    const accountId = url.searchParams.get("accountId");
+
+    if (!accountId) {
+      return NextResponse.json(
+        { error: "accountId is required" },
+        { status: 400 }
+      );
+    }
+
+    const credentials = await db.twitterCredentials.findUnique({
+      where: { accountId },
+    });
 
     if (!credentials) {
-      credentials = await db.twitterCredentials.create({
-        data: {},
-      });
+      return NextResponse.json(
+        { error: "Credentials not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
@@ -30,10 +43,18 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const url = new URL(request.url);
+    const accountId = url.searchParams.get("accountId");
+
+    if (!accountId) {
+      return NextResponse.json(
+        { error: "accountId is required" },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const { clientId, clientSecret, rapidApiKey } = body;
-
-    let credentials = await db.twitterCredentials.findFirst();
 
     const updateData: Record<string, string> = {};
 
@@ -43,16 +64,10 @@ export async function POST(request: Request) {
     if (rapidApiKey && rapidApiKey !== "••••••••")
       updateData.rapidApiKey = rapidApiKey;
 
-    if (credentials) {
-      credentials = await db.twitterCredentials.update({
-        where: { id: credentials.id },
-        data: updateData,
-      });
-    } else {
-      credentials = await db.twitterCredentials.create({
-        data: updateData,
-      });
-    }
+    const credentials = await db.twitterCredentials.update({
+      where: { accountId },
+      data: updateData,
+    });
 
     return NextResponse.json({
       id: credentials.id,

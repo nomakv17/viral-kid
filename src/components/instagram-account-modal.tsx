@@ -3,18 +3,17 @@
 import { useState, useEffect } from "react";
 import { X, Loader2, Copy, Check, ExternalLink } from "lucide-react";
 
-interface AccountModalProps {
+interface InstagramAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  platform: "twitter" | "youtube";
   accountId: string;
 }
 
-interface TwitterCredentialsState {
-  clientId: string;
-  clientSecret: string;
-  rapidApiKey: string;
-  username?: string;
+interface InstagramCredentialsState {
+  appId: string;
+  appSecret: string;
+  instagramUsername?: string;
+  facebookPageName?: string;
   isConnected: boolean;
 }
 
@@ -180,16 +179,14 @@ function CredentialInput({
   );
 }
 
-export function AccountModal({
+export function InstagramAccountModal({
   isOpen,
   onClose,
-  platform,
   accountId,
-}: AccountModalProps) {
-  const [credentials, setCredentials] = useState<TwitterCredentialsState>({
-    clientId: "",
-    clientSecret: "",
-    rapidApiKey: "",
+}: InstagramAccountModalProps) {
+  const [credentials, setCredentials] = useState<InstagramCredentialsState>({
+    appId: "",
+    appSecret: "",
     isConnected: false,
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -204,7 +201,7 @@ export function AccountModal({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setCallbackUrl(`${window.location.origin}/api/twitter/callback`);
+      setCallbackUrl(`${window.location.origin}/api/instagram/callback`);
     }
   }, []);
 
@@ -212,7 +209,6 @@ export function AccountModal({
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
-      // Small delay to ensure DOM is ready before animating
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setIsVisible(true);
@@ -221,7 +217,6 @@ export function AccountModal({
       return;
     }
     setIsVisible(false);
-    // Wait for animation to complete before unmounting
     const timer = setTimeout(() => {
       setShouldRender(false);
     }, 200);
@@ -229,9 +224,9 @@ export function AccountModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (isOpen && platform === "twitter" && accountId) {
+    if (isOpen && accountId) {
       setIsLoading(true);
-      fetch(`/api/twitter/credentials?accountId=${accountId}`)
+      fetch(`/api/instagram/credentials?accountId=${accountId}`)
         .then((res) => {
           if (!res.ok) throw new Error("API error");
           return res.json();
@@ -239,11 +234,11 @@ export function AccountModal({
         .then((data) => {
           if (!data.error) {
             setCredentials({
-              clientId: data.clientId || "",
-              clientSecret: data.clientSecret || "",
-              rapidApiKey: data.rapidApiKey || "",
-              username: data.username,
-              isConnected: !!data.username,
+              appId: data.appId || "",
+              appSecret: data.appSecret || "",
+              instagramUsername: data.instagramUsername,
+              facebookPageName: data.facebookPageName,
+              isConnected: !!data.isConnected,
             });
           }
         })
@@ -252,22 +247,21 @@ export function AccountModal({
         })
         .finally(() => setIsLoading(false));
     }
-  }, [isOpen, platform, accountId]);
+  }, [isOpen, accountId]);
 
   const handleSave = async () => {
-    if (platform !== "twitter" || !accountId) return;
+    if (!accountId) return;
 
     setIsSaving(true);
     try {
       const res = await fetch(
-        `/api/twitter/credentials?accountId=${accountId}`,
+        `/api/instagram/credentials?accountId=${accountId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            clientId: credentials.clientId,
-            clientSecret: credentials.clientSecret,
-            rapidApiKey: credentials.rapidApiKey,
+            appId: credentials.appId,
+            appSecret: credentials.appSecret,
           }),
         }
       );
@@ -285,11 +279,11 @@ export function AccountModal({
   };
 
   const handleConnect = async () => {
-    if (platform !== "twitter" || !accountId) return;
+    if (!accountId) return;
 
     setIsConnecting(true);
     try {
-      const res = await fetch(`/api/twitter/auth?accountId=${accountId}`);
+      const res = await fetch(`/api/instagram/auth?accountId=${accountId}`);
       const data = await res.json();
 
       if (data.authUrl) {
@@ -313,9 +307,7 @@ export function AccountModal({
     }
   };
 
-  const updateCredential = (
-    key: "clientId" | "clientSecret" | "rapidApiKey"
-  ) => {
+  const updateCredential = (key: "appId" | "appSecret") => {
     return (value: string) => {
       setCredentials((prev) => ({ ...prev, [key]: value }));
     };
@@ -339,7 +331,7 @@ export function AccountModal({
 
       {/* Modal */}
       <div
-        className="relative z-10 w-full max-w-3xl rounded-2xl border backdrop-blur-xl"
+        className="relative z-10 w-full max-w-2xl rounded-2xl border backdrop-blur-xl"
         style={{
           background:
             "linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
@@ -362,7 +354,7 @@ export function AccountModal({
           }}
         >
           <h2 className="text-sm font-semibold tracking-wide text-white/90">
-            {platform === "twitter" ? "Twitter" : "YouTube"} Account
+            Instagram Account
           </h2>
           <IconButton
             icon={<X className="h-4 w-4" />}
@@ -405,104 +397,103 @@ export function AccountModal({
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-green-500" />
                     <span className="text-sm text-white/90">
-                      Connected as @{credentials.username}
+                      Connected as @{credentials.instagramUsername}
+                      {credentials.facebookPageName &&
+                        ` (via ${credentials.facebookPageName})`}
                     </span>
                   </div>
                 </div>
               )}
 
-              {/* Two Column Layout */}
-              <div className="mb-6 flex gap-6">
-                {/* Left Column - Twitter OAuth */}
-                <div className="flex-1">
-                  {/* Callback URL */}
-                  <div className="mb-4">
-                    <label className="mb-2 block text-sm font-semibold tracking-wide text-white/70">
-                      Callback URL
-                    </label>
-                    <p className="mb-2 text-xs text-white/50">
-                      Add this to your Twitter App&apos;s OAuth 2.0 settings
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="flex-1 overflow-hidden rounded-lg border px-4 py-3"
-                        style={{
-                          background: "rgba(255,255,255,0.03)",
-                          borderColor: "rgba(255,255,255,0.1)",
-                        }}
-                      >
-                        <code className="block truncate text-sm text-white/70">
-                          {callbackUrl}
-                        </code>
-                      </div>
-                      <IconButton
-                        icon={
-                          copied ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )
-                        }
-                        onClick={handleCopyCallback}
-                        label="Copy callback URL"
-                      />
-                    </div>
-                  </div>
+              {/* Requirements Info */}
+              <div
+                className="mb-6 rounded-lg border px-4 py-3"
+                style={{
+                  background: "rgba(251,191,36,0.1)",
+                  borderColor: "rgba(251,191,36,0.3)",
+                }}
+              >
+                <p className="text-sm text-white/80">
+                  <strong>Requirements:</strong> Instagram Business or Creator
+                  account linked to a Facebook Page. Personal accounts are not
+                  supported by the Instagram API.
+                </p>
+              </div>
 
-                  <CredentialInput
-                    id="clientId"
-                    label="Client ID"
-                    value={credentials.clientId}
-                    onChange={updateCredential("clientId")}
-                    placeholder="Enter Client ID..."
-                  />
+              {/* Meta App Credentials */}
+              <div className="mb-6">
+                <h3 className="mb-4 text-sm font-semibold tracking-wide text-white/90">
+                  Meta App Credentials
+                </h3>
+                <p className="mb-4 text-xs text-white/50">
+                  Create a Meta App at developers.facebook.com and add
+                  &quot;Facebook Login for Business&quot; product.
+                </p>
 
-                  <CredentialInput
-                    id="clientSecret"
-                    label="Client Secret"
-                    value={credentials.clientSecret}
-                    onChange={updateCredential("clientSecret")}
-                    placeholder="Enter Client Secret..."
-                    type="password"
-                  />
-
-                  {/* Developer Portal Link */}
-                  <a
-                    href="https://developer.twitter.com/en/portal/dashboard"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 text-sm text-sky-400 hover:text-sky-300"
-                    style={{ transition: "color 0.3s ease" }}
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Open Twitter Developer Portal
-                  </a>
-                </div>
-
-                {/* Divider */}
-                <div
-                  className="w-px self-stretch"
-                  style={{ background: "rgba(255,255,255,0.1)" }}
-                />
-
-                {/* Right Column - Rapid API */}
-                <div className="flex-1">
-                  <h3 className="mb-4 text-sm font-semibold tracking-wide text-white/90">
-                    Rapid API
-                  </h3>
-                  <p className="mb-4 text-xs text-white/50">
-                    Required for additional Twitter features via Rapid API.
+                {/* Callback URL */}
+                <div className="mb-4">
+                  <label className="mb-2 block text-sm font-semibold tracking-wide text-white/70">
+                    OAuth Redirect URI
+                  </label>
+                  <p className="mb-2 text-xs text-white/50">
+                    Add this to your Facebook Login settings under Valid OAuth
+                    Redirect URIs
                   </p>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="flex-1 overflow-hidden rounded-lg border px-4 py-3"
+                      style={{
+                        background: "rgba(255,255,255,0.03)",
+                        borderColor: "rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <code className="block truncate text-sm text-white/70">
+                        {callbackUrl}
+                      </code>
+                    </div>
+                    <IconButton
+                      icon={
+                        copied ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )
+                      }
+                      onClick={handleCopyCallback}
+                      label="Copy redirect URI"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <CredentialInput
+                    id="appId"
+                    label="App ID"
+                    value={credentials.appId}
+                    onChange={updateCredential("appId")}
+                    placeholder="Enter Meta App ID..."
+                  />
 
                   <CredentialInput
-                    id="rapidApiKey"
-                    label="API Key"
-                    value={credentials.rapidApiKey}
-                    onChange={updateCredential("rapidApiKey")}
-                    placeholder="Enter Rapid API Key..."
+                    id="appSecret"
+                    label="App Secret"
+                    value={credentials.appSecret}
+                    onChange={updateCredential("appSecret")}
+                    placeholder="Enter App Secret..."
                     type="password"
                   />
                 </div>
+
+                <a
+                  href="https://developers.facebook.com/apps/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-2 text-sm text-pink-400 hover:text-pink-300"
+                  style={{ transition: "color 0.3s ease" }}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open Meta Developer Portal
+                </a>
               </div>
 
               {/* Action Buttons */}
@@ -532,9 +523,7 @@ export function AccountModal({
                 <ModalButton
                   onClick={handleConnect}
                   disabled={
-                    isConnecting ||
-                    !credentials.clientId ||
-                    !credentials.clientSecret
+                    isConnecting || !credentials.appId || !credentials.appSecret
                   }
                   variant="primary"
                   className="flex-1"
