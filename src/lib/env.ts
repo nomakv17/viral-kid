@@ -11,20 +11,10 @@ export const env = createEnv({
     // Auth
     AUTH_SECRET: z.string().min(1),
 
-    // Twitter API
-    TWITTER_API_KEY: z.string().min(1),
-    TWITTER_API_SECRET: z.string().min(1),
-    TWITTER_ACCESS_TOKEN: z.string().min(1),
-    TWITTER_ACCESS_TOKEN_SECRET: z.string().min(1),
-    TWITTER_BEARER_TOKEN: z.string().min(1),
-
-    // YouTube API
-    YOUTUBE_API_KEY: z.string().min(1),
-
     // Redis (for job queues)
     REDIS_URL: z.string().url().optional(),
 
-    // Vercel Cron authentication
+    // Cron authentication
     CRON_SECRET: z.string().min(1).optional(),
   },
   client: {
@@ -35,14 +25,6 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
 
     AUTH_SECRET: process.env.AUTH_SECRET,
-
-    TWITTER_API_KEY: process.env.TWITTER_API_KEY,
-    TWITTER_API_SECRET: process.env.TWITTER_API_SECRET,
-    TWITTER_ACCESS_TOKEN: process.env.TWITTER_ACCESS_TOKEN,
-    TWITTER_ACCESS_TOKEN_SECRET: process.env.TWITTER_ACCESS_TOKEN_SECRET,
-    TWITTER_BEARER_TOKEN: process.env.TWITTER_BEARER_TOKEN,
-
-    YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
 
     REDIS_URL: process.env.REDIS_URL,
 
