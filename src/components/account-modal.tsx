@@ -198,6 +198,7 @@ export function AccountModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState("");
 
@@ -406,6 +407,33 @@ export function AccountModal({
     }
   };
 
+  const handleDisconnect = async () => {
+    if (platform !== "twitter" || !accountId) return;
+
+    setIsDisconnecting(true);
+    try {
+      const res = await fetch(
+        `/api/twitter/disconnect?accountId=${accountId}`,
+        { method: "POST" }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to disconnect");
+      }
+
+      setCredentials((prev) => ({
+        ...prev,
+        username: undefined,
+        isConnected: false,
+      }));
+      toast.success("Account disconnected");
+    } catch {
+      toast.error("Failed to disconnect");
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
   const updateCredential = (
     key: "clientId" | "clientSecret" | "rapidApiKey"
   ) => {
@@ -499,11 +527,42 @@ export function AccountModal({
                         borderColor: "rgba(34,197,94,0.3)",
                       }}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-green-500" />
-                        <span className="text-sm text-white/90">
-                          Connected as @{credentials.username}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                          <span className="text-sm text-white/90">
+                            Connected as @{credentials.username}
+                          </span>
+                        </div>
+                        <motion.button
+                          type="button"
+                          onClick={handleDisconnect}
+                          disabled={isDisconnecting}
+                          className="rounded-md px-3 py-1 text-xs font-medium"
+                          style={{
+                            color: isDisconnecting
+                              ? "rgba(255,255,255,0.3)"
+                              : "rgba(239,68,68,0.9)",
+                            backgroundColor: "rgba(239,68,68,0.1)",
+                            cursor: isDisconnecting ? "not-allowed" : "pointer",
+                          }}
+                          whileHover={
+                            isDisconnecting
+                              ? {}
+                              : { backgroundColor: "rgba(239,68,68,0.2)" }
+                          }
+                          whileTap={isDisconnecting ? {} : { scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          {isDisconnecting ? (
+                            <span className="flex items-center gap-1">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Disconnecting...
+                            </span>
+                          ) : (
+                            "Disconnect"
+                          )}
+                        </motion.button>
                       </div>
                     </motion.div>
                   )}

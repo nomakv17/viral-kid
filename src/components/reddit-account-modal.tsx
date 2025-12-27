@@ -194,6 +194,7 @@ export function RedditAccountModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState("");
 
@@ -393,6 +394,32 @@ export function RedditAccountModal({
     }
   };
 
+  const handleDisconnect = async () => {
+    if (!accountId) return;
+
+    setIsDisconnecting(true);
+    try {
+      const res = await fetch(`/api/reddit/disconnect?accountId=${accountId}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to disconnect");
+      }
+
+      setCredentials((prev) => ({
+        ...prev,
+        redditUsername: undefined,
+        isConnected: false,
+      }));
+      toast.success("Account disconnected");
+    } catch {
+      toast.error("Failed to disconnect");
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
+
   const updateCredential = (key: "clientId" | "clientSecret") => {
     return (value: string) => {
       setCredentials((prev) => ({ ...prev, [key]: value }));
@@ -479,11 +506,45 @@ export function RedditAccountModal({
                         borderColor: "rgba(34,197,94,0.3)",
                       }}
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-green-500" />
-                        <span className="text-sm text-white/90">
-                          Connected as u/{credentials.redditUsername}
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                          <span className="text-sm text-white/90">
+                            Connected as u/{credentials.redditUsername}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleDisconnect}
+                          disabled={isDisconnecting}
+                          className="rounded-md px-3 py-1 text-xs font-medium transition-colors"
+                          style={{
+                            color: isDisconnecting
+                              ? "rgba(255,255,255,0.3)"
+                              : "rgba(239,68,68,0.9)",
+                            backgroundColor: "rgba(239,68,68,0.1)",
+                            cursor: isDisconnecting ? "not-allowed" : "pointer",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isDisconnecting) {
+                              e.currentTarget.style.backgroundColor =
+                                "rgba(239,68,68,0.2)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor =
+                              "rgba(239,68,68,0.1)";
+                          }}
+                        >
+                          {isDisconnecting ? (
+                            <span className="flex items-center gap-1">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Disconnecting...
+                            </span>
+                          ) : (
+                            "Disconnect"
+                          )}
+                        </button>
                       </div>
                     </div>
                   )}

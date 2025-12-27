@@ -1,0 +1,36 @@
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
+
+export async function POST(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const accountId = searchParams.get("accountId");
+
+    if (!accountId) {
+      return NextResponse.json(
+        { error: "accountId is required" },
+        { status: 400 }
+      );
+    }
+
+    // Clear only the OAuth tokens and user info, keep app credentials
+    await db.redditCredentials.update({
+      where: { accountId },
+      data: {
+        accessToken: null,
+        refreshToken: null,
+        tokenExpiresAt: null,
+        redditUserId: null,
+        username: null,
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to disconnect Reddit:", error);
+    return NextResponse.json(
+      { error: "Failed to disconnect" },
+      { status: 500 }
+    );
+  }
+}
