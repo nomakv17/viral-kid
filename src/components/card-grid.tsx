@@ -765,7 +765,13 @@ export function CardGrid() {
       }
 
       if (data.replied) {
-        toast.success(`Replied to tweet by @${data.repliedTo}`);
+        const platformMessage =
+          account.platform === "twitter"
+            ? `Replied to tweet by @${data.repliedTo}`
+            : account.platform === "youtube"
+              ? `Replied to comment by ${data.repliedTo}`
+              : `Replied to ${data.repliedTo}`;
+        toast.success(platformMessage);
       } else if (data.message) {
         toast(data.message, { icon: "ℹ️" });
       } else {

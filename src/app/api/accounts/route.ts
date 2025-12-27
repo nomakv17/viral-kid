@@ -20,6 +20,9 @@ interface AccountWithCredentials {
     channelTitle: string | null;
     accessToken: string | null;
   } | null;
+  youtubeConfig: {
+    enabled: boolean;
+  } | null;
   instagramCredentials: {
     instagramUsername: string | null;
     accessToken: string | null;
@@ -60,6 +63,11 @@ export async function GET() {
             accessToken: true,
           },
         },
+        youtubeConfig: {
+          select: {
+            enabled: true,
+          },
+        },
         instagramCredentials: {
           select: {
             instagramUsername: true,
@@ -97,7 +105,7 @@ export async function GET() {
           displayName = account.youtubeCredentials?.channelTitle || null;
           hasApiKey = true; // YouTube doesn't need extra API key for now
           hasSearchTerm = true; // YouTube doesn't need search term
-          isAutomationEnabled = false; // TODO: Add when YouTube config has enabled field
+          isAutomationEnabled = account.youtubeConfig?.enabled ?? false;
         } else if (account.platform === "instagram") {
           isConnected = !!account.instagramCredentials?.accessToken;
           displayName = account.instagramCredentials?.instagramUsername

@@ -26,7 +26,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       id: config.id,
+      enabled: config.enabled,
       schedule: config.schedule,
+      minimumLikesCount: config.minimumLikesCount,
     });
   } catch (error) {
     console.error("Failed to fetch YouTube configuration:", error);
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { schedule } = body;
+    const { schedule, minimumLikesCount } = body;
 
     // Validate schedule value
     const validSchedules = [
@@ -69,16 +71,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate minimumLikesCount
+    if (
+      minimumLikesCount !== undefined &&
+      (typeof minimumLikesCount !== "number" || minimumLikesCount < 0)
+    ) {
+      return NextResponse.json(
+        { error: "minimumLikesCount must be a non-negative number" },
+        { status: 400 }
+      );
+    }
+
     const config = await db.youTubeConfiguration.update({
       where: { accountId },
       data: {
         ...(schedule && { schedule }),
+        ...(minimumLikesCount !== undefined && { minimumLikesCount }),
       },
     });
 
     return NextResponse.json({
       id: config.id,
+      enabled: config.enabled,
       schedule: config.schedule,
+      minimumLikesCount: config.minimumLikesCount,
     });
   } catch (error) {
     console.error("Failed to save YouTube configuration:", error);

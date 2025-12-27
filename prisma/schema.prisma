@@ -68,6 +68,7 @@ model Account {
   openRouterCredentials OpenRouterCredentials?
   logs                  Log[]
   tweetInteractions     TweetInteraction[]
+  youtubeCommentInteractions YouTubeCommentInteraction[]
 
   @@index([platform])
   @@index([order])
@@ -116,10 +117,12 @@ model TwitterCredentials {
 }
 
 model YouTubeConfiguration {
-  id         String   @id @default(cuid())
-  schedule   String   @default("every_hour") // every_5_min, every_10_min, every_30_min, every_hour, every_3_hours, every_6_hours
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                String   @id @default(cuid())
+  enabled           Boolean  @default(false) // Whether automation is active
+  schedule          String   @default("every_hour") // every_5_min, every_10_min, every_30_min, every_hour, every_3_hours, every_6_hours
+  minimumLikesCount Int      @default(5) // Minimum likes filter for comments
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   // Relation to Account
   accountId  String   @unique
@@ -255,4 +258,31 @@ model TweetInteraction {
   @@index([accountId])
   @@index([createdAt])
   @@index([accountId, createdAt])
+}
+
+// YouTube comment interactions - tracks comments and our responses
+model YouTubeCommentInteraction {
+  id            String   @id @default(cuid())
+  commentId     String   // Original comment ID from YouTube
+  videoId       String   // Video the comment is on
+  videoTitle    String   @default("") // Video title for display
+  userComment   String   // The original comment content
+  authorName    String   // Username of the commenter
+  authorChannelId String @default("") // Channel ID of commenter
+  likeCount     Int      @default(0)
+  ourReply      String?  // Our response comment content
+  ourReplyId    String?  // Our reply comment ID
+  repliedAt     DateTime? // When we replied
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relation to Account
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, commentId])
+  @@index([accountId])
+  @@index([createdAt])
+  @@index([accountId, createdAt])
+  @@index([videoId])
 }
