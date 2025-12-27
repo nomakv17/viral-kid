@@ -7,5 +7,10 @@
   "deploy": {
     "restartPolicyType": "on_failure",
     "restartPolicyMaxRetries": 10
+  },
+  "variables": {
+    "DATABASE_URL": "${{Postgres.DATABASE_URL}}",
+    "REDIS_URL": "${{Redis.REDIS_URL}}",
+    "NODE_ENV": "production"
   }
 }
