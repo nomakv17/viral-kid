@@ -974,6 +974,7 @@ export function CardGrid() {
       </div>
 
       <SettingsModal
+        key={`settings-${settingsModal.accountId}`}
         isOpen={settingsModal.isOpen}
         onClose={closeSettings}
         platform={settingsModal.platform}
@@ -982,6 +983,7 @@ export function CardGrid() {
 
       {accountModal.platform === "twitter" ? (
         <AccountModal
+          key={`account-${accountModal.accountId}`}
           isOpen={accountModal.isOpen}
           onClose={closeAccount}
           platform="twitter"
@@ -989,18 +991,21 @@ export function CardGrid() {
         />
       ) : accountModal.platform === "youtube" ? (
         <YouTubeAccountModal
+          key={`account-${accountModal.accountId}`}
           isOpen={accountModal.isOpen}
           onClose={closeAccount}
           accountId={accountModal.accountId}
         />
       ) : accountModal.platform === "instagram" ? (
         <InstagramAccountModal
+          key={`account-${accountModal.accountId}`}
           isOpen={accountModal.isOpen}
           onClose={closeAccount}
           accountId={accountModal.accountId}
         />
       ) : (
         <RedditAccountModal
+          key={`account-${accountModal.accountId}`}
           isOpen={accountModal.isOpen}
           onClose={closeAccount}
           accountId={accountModal.accountId}
@@ -1008,6 +1013,7 @@ export function CardGrid() {
       )}
 
       <ConfirmModal
+        key={`confirm-${deleteModal.accountId}`}
         isOpen={deleteModal.isOpen}
         onClose={closeDeleteModal}
         onConfirm={handleDeleteAccount}
@@ -1019,6 +1025,7 @@ export function CardGrid() {
       />
 
       <LogsModal
+        key={`logs-${logsModal.accountId}`}
         isOpen={logsModal.isOpen}
         onClose={closeLogs}
         accountId={logsModal.accountId}
@@ -1026,6 +1033,7 @@ export function CardGrid() {
       />
 
       <DatabaseModal
+        key={`database-${databaseModal.accountId}`}
         isOpen={databaseModal.isOpen}
         onClose={closeDatabase}
         accountId={databaseModal.accountId}
