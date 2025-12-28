@@ -628,33 +628,7 @@ export function CardGrid() {
       const res = await fetch("/api/accounts");
       if (!res.ok) throw new Error("Failed to fetch accounts");
       const data = await res.json();
-
-      // Check which platforms are missing and create default accounts for them
-      const platforms = ["twitter", "youtube", "instagram", "reddit"] as const;
-      const existingPlatforms = new Set(
-        data.map((account: Account) => account.platform)
-      );
-      const missingPlatforms = platforms.filter(
-        (p) => !existingPlatforms.has(p)
-      );
-
-      if (missingPlatforms.length > 0) {
-        await Promise.all(
-          missingPlatforms.map((platform) =>
-            fetch("/api/accounts", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ platform }),
-            })
-          )
-        );
-        // Refetch after creating defaults
-        const refetchRes = await fetch("/api/accounts");
-        const refetchData = await refetchRes.json();
-        setAccounts(refetchData);
-      } else {
-        setAccounts(data);
-      }
+      setAccounts(data);
     } catch (error) {
       console.error("Failed to fetch accounts:", error);
     } finally {

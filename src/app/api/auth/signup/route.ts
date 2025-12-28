@@ -121,7 +121,7 @@ export async function POST(request: Request) {
     // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create user and mark invite as used in a transaction
+    // Create user, default accounts, and mark invite as used in a transaction
     const user = await db.$transaction(async (tx) => {
       // Create the user
       const newUser = await tx.user.create({
@@ -131,6 +131,46 @@ export async function POST(request: Request) {
           role: "USER",
         },
       });
+
+      // Create default accounts for all platforms
+      const platforms: Array<"twitter" | "youtube" | "instagram" | "reddit"> = [
+        "twitter",
+        "youtube",
+        "instagram",
+        "reddit",
+      ];
+      for (let i = 0; i < platforms.length; i++) {
+        const platform = platforms[i]!;
+        const platformData =
+          platform === "twitter"
+            ? {
+                twitterCredentials: { create: {} },
+                twitterConfig: { create: {} },
+              }
+            : platform === "youtube"
+              ? {
+                  youtubeCredentials: { create: {} },
+                  youtubeConfig: { create: {} },
+                }
+              : platform === "instagram"
+                ? {
+                    instagramCredentials: { create: {} },
+                    instagramConfig: { create: {} },
+                  }
+                : {
+                    redditCredentials: { create: {} },
+                    redditConfig: { create: {} },
+                  };
+
+        await tx.account.create({
+          data: {
+            platform,
+            order: i,
+            userId: newUser.id,
+            ...platformData,
+          },
+        });
+      }
 
       // Mark invite as used
       await tx.invite.update({
