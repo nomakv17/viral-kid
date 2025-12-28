@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
-  backdropVariants,
   modalVariants,
+  modalContainerVariants,
   dropdownVariants,
   iconButtonHoverState,
   buttonHoverState,
@@ -405,29 +405,36 @@ export function SystemPromptModal({
   const contentType = platform === "twitter" ? "tweet" : "comment";
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <motion.div
+          key="system-prompt-modal"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          variants={modalContainerVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+        >
           {/* Backdrop */}
           <motion.div
             className="absolute inset-0 z-0 bg-black/80 backdrop-blur-sm"
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
           />
 
           {/* Modal */}
           <motion.div
-            className="relative z-10 w-full max-w-5xl rounded-2xl border backdrop-blur-xl"
+            className="relative z-10 w-full max-w-5xl rounded-2xl border"
             style={{
               background:
                 "linear-gradient(to bottom, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)",
               borderColor: "rgba(255,255,255,0.1)",
               boxShadow:
                 "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1), inset 0 -1px 0 rgba(0,0,0,0.2)",
+              backdropFilter: "blur(24px)",
+              WebkitBackdropFilter: "blur(24px)",
             }}
             variants={modalVariants}
             initial="hidden"
@@ -806,7 +813,7 @@ You are a helpful social media assistant. Your role is to engage with users in a
               </motion.div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

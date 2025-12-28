@@ -17,9 +17,8 @@ export const modalVariants: Variants = {
     scale: 1,
     y: 0,
     transition: {
-      type: "spring" as const,
-      stiffness: 300,
-      damping: 30,
+      duration: 0.2,
+      ease: "easeOut",
     },
   },
   exit: {
@@ -30,6 +29,12 @@ export const modalVariants: Variants = {
       duration: 0.15,
     },
   },
+};
+
+export const modalContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+  exit: { opacity: 0 },
 };
 
 export const dropdownVariants: Variants = {
