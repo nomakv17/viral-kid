@@ -28,6 +28,13 @@ const SCHEDULE_OPTIONS = [
   { value: "every_6_hours", label: "Every 6 hours" },
 ];
 
+const TIME_RANGE_OPTIONS = [
+  { value: "hour", label: "Last hour" },
+  { value: "day", label: "Last 24 hours" },
+  { value: "week", label: "Last week" },
+  { value: "month", label: "Last month" },
+];
+
 function ModalButton({
   children,
   onClick,
@@ -111,7 +118,14 @@ export function SettingsModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Reddit-specific state
+  const [keywords, setKeywords] = useState("");
+  const [timeRange, setTimeRange] = useState("day");
+  const [minimumUpvotes, setMinimumUpvotes] = useState(10);
+  const [isTimeRangeDropdownOpen, setIsTimeRangeDropdownOpen] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const timeRangeDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -130,6 +144,23 @@ export function SettingsModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
+  // Close time range dropdown when clicking outside
+  useEffect(() => {
+    if (!isTimeRangeDropdownOpen) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        timeRangeDropdownRef.current &&
+        !timeRangeDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsTimeRangeDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isTimeRangeDropdownOpen]);
+
   useEffect(() => {
     if (isOpen && accountId) {
       setIsLoading(true);
@@ -138,7 +169,9 @@ export function SettingsModal({
           ? `/api/twitter/configuration?accountId=${accountId}`
           : platform === "youtube"
             ? `/api/youtube/configuration?accountId=${accountId}`
-            : `/api/instagram/configuration?accountId=${accountId}`;
+            : platform === "reddit"
+              ? `/api/reddit/configuration?accountId=${accountId}`
+              : `/api/instagram/configuration?accountId=${accountId}`;
 
       fetch(apiPath)
         .then((res) => {
@@ -146,14 +179,26 @@ export function SettingsModal({
           return res.json();
         })
         .then((data) => {
+          // Twitter-specific
           if (data.searchTerm !== undefined) {
             setSearchTerm(data.searchTerm);
           }
-          if (data.schedule) {
-            setSchedule(data.schedule);
-          }
           if (data.minimumLikesCount !== undefined) {
             setMinimumLikesCount(data.minimumLikesCount);
+          }
+          // Reddit-specific
+          if (data.keywords !== undefined) {
+            setKeywords(data.keywords);
+          }
+          if (data.timeRange !== undefined) {
+            setTimeRange(data.timeRange);
+          }
+          if (data.minimumUpvotes !== undefined) {
+            setMinimumUpvotes(data.minimumUpvotes);
+          }
+          // Common
+          if (data.schedule) {
+            setSchedule(data.schedule);
           }
         })
         .catch(() => {})
@@ -171,12 +216,23 @@ export function SettingsModal({
           ? `/api/twitter/configuration?accountId=${accountId}`
           : platform === "youtube"
             ? `/api/youtube/configuration?accountId=${accountId}`
-            : `/api/instagram/configuration?accountId=${accountId}`;
+            : platform === "reddit"
+              ? `/api/reddit/configuration?accountId=${accountId}`
+              : `/api/instagram/configuration?accountId=${accountId}`;
 
-      const body =
-        platform === "twitter"
-          ? JSON.stringify({ searchTerm, schedule, minimumLikesCount })
-          : JSON.stringify({ schedule });
+      let body: string;
+      if (platform === "twitter") {
+        body = JSON.stringify({ searchTerm, schedule, minimumLikesCount });
+      } else if (platform === "reddit") {
+        body = JSON.stringify({
+          keywords,
+          timeRange,
+          minimumUpvotes,
+          schedule,
+        });
+      } else {
+        body = JSON.stringify({ schedule });
+      }
 
       const res = await fetch(apiPath, {
         method: "POST",
@@ -201,12 +257,18 @@ export function SettingsModal({
     SCHEDULE_OPTIONS.find((opt) => opt.value === schedule)?.label ??
     "Select schedule";
 
+  const selectedTimeRangeLabel =
+    TIME_RANGE_OPTIONS.find((opt) => opt.value === timeRange)?.label ??
+    "Select time range";
+
   const platformTitle =
     platform === "twitter"
       ? "Twitter"
       : platform === "youtube"
         ? "YouTube"
-        : "Instagram";
+        : platform === "reddit"
+          ? "Reddit"
+          : "Instagram";
 
   return (
     <AnimatePresence>
@@ -340,6 +402,172 @@ export function SettingsModal({
                     />
                     <p className="mt-1 text-xs text-white/40">
                       Only show tweets with at least this many likes
+                    </p>
+                  </div>
+                )}
+
+                {/* Keywords Input - Reddit only */}
+                {platform === "reddit" && (
+                  <div className="mb-5">
+                    <label
+                      htmlFor="keywords"
+                      className="mb-2 block text-sm font-semibold tracking-wide text-white/90"
+                    >
+                      Keywords
+                    </label>
+                    <input
+                      id="keywords"
+                      type="text"
+                      value={keywords}
+                      onChange={(e) => setKeywords(e.target.value)}
+                      placeholder="protein powder, supplements, fitness"
+                      className="w-full rounded-lg border px-4 py-3 text-white/90 outline-none backdrop-blur-xl transition-all duration-200"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        borderColor: "rgba(255,255,255,0.1)",
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = "rgba(255,255,255,0.3)";
+                        e.target.style.background = "rgba(255,255,255,0.08)";
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = "rgba(255,255,255,0.1)";
+                        e.target.style.background = "rgba(255,255,255,0.05)";
+                      }}
+                    />
+                    <p className="mt-1 text-xs text-white/40">
+                      Separate multiple keywords with commas
+                    </p>
+                  </div>
+                )}
+
+                {/* Time Range Dropdown - Reddit only */}
+                {platform === "reddit" && (
+                  <div className="mb-5">
+                    <label className="mb-2 block text-sm font-semibold tracking-wide text-white/90">
+                      Time Range
+                    </label>
+                    <div className="relative" ref={timeRangeDropdownRef}>
+                      <motion.button
+                        type="button"
+                        onClick={() =>
+                          setIsTimeRangeDropdownOpen(!isTimeRangeDropdownOpen)
+                        }
+                        className="flex w-full items-center justify-between rounded-lg border px-4 py-3 text-left backdrop-blur-xl"
+                        style={{
+                          background: "rgba(255,255,255,0.05)",
+                          borderColor: isTimeRangeDropdownOpen
+                            ? "rgba(255,255,255,0.3)"
+                            : "rgba(255,255,255,0.1)",
+                        }}
+                        whileHover={{ borderColor: "rgba(255,255,255,0.2)" }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <span className="text-white/90">
+                          {selectedTimeRangeLabel}
+                        </span>
+                        <motion.div
+                          animate={{
+                            rotate: isTimeRangeDropdownOpen ? 180 : 0,
+                          }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ChevronDown className="h-5 w-5 text-white/50" />
+                        </motion.div>
+                      </motion.button>
+
+                      <AnimatePresence>
+                        {isTimeRangeDropdownOpen && (
+                          <motion.div
+                            variants={dropdownVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-lg border backdrop-blur-xl"
+                            style={{
+                              background:
+                                "linear-gradient(to bottom, rgba(30,30,30,0.98) 0%, rgba(20,20,20,0.98) 100%)",
+                              borderColor: "rgba(255,255,255,0.15)",
+                              boxShadow:
+                                "0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1)",
+                            }}
+                          >
+                            {TIME_RANGE_OPTIONS.map((option, index) => (
+                              <motion.button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                  setTimeRange(option.value);
+                                  setIsTimeRangeDropdownOpen(false);
+                                }}
+                                className="w-full px-4 py-3 text-left"
+                                style={{
+                                  color:
+                                    timeRange === option.value
+                                      ? "rgba(255,255,255,1)"
+                                      : "rgba(255,255,255,0.5)",
+                                  backgroundColor:
+                                    timeRange === option.value
+                                      ? "rgba(255,255,255,0.1)"
+                                      : "rgba(0,0,0,0)",
+                                }}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: index * 0.02 }}
+                                whileHover={{
+                                  backgroundColor: "rgba(255,255,255,0.08)",
+                                  color: "rgba(255,255,255,1)",
+                                }}
+                              >
+                                {option.label}
+                              </motion.button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    <p className="mt-1 text-xs text-white/40">
+                      Only search posts from this time period
+                    </p>
+                  </div>
+                )}
+
+                {/* Minimum Upvotes - Reddit only */}
+                {platform === "reddit" && (
+                  <div className="mb-5">
+                    <label
+                      htmlFor="minimumUpvotes"
+                      className="mb-2 block text-sm font-semibold tracking-wide text-white/90"
+                    >
+                      Minimum Upvotes
+                    </label>
+                    <input
+                      id="minimumUpvotes"
+                      type="number"
+                      min="0"
+                      value={minimumUpvotes}
+                      onChange={(e) =>
+                        setMinimumUpvotes(
+                          Math.max(0, parseInt(e.target.value) || 0)
+                        )
+                      }
+                      placeholder="10"
+                      className="w-full rounded-lg border px-4 py-3 text-white/90 outline-none backdrop-blur-xl transition-all duration-200"
+                      style={{
+                        background: "rgba(255,255,255,0.05)",
+                        borderColor: "rgba(255,255,255,0.1)",
+                      }}
+                      onFocus={(e) => {
+                        e.target.style.borderColor = "rgba(255,255,255,0.3)";
+                        e.target.style.background = "rgba(255,255,255,0.08)";
+                      }}
+                      onBlur={(e) => {
+                        e.target.style.borderColor = "rgba(255,255,255,0.1)";
+                        e.target.style.background = "rgba(255,255,255,0.05)";
+                      }}
+                    />
+                    <p className="mt-1 text-xs text-white/40">
+                      Only reply to posts with at least this many upvotes
                     </p>
                   </div>
                 )}

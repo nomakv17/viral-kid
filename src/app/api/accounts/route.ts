@@ -33,7 +33,7 @@ interface AccountWithCredentials {
   } | null;
   redditConfig: {
     enabled: boolean;
-    subreddit: string | null;
+    keywords: string | null;
   } | null;
   openRouterCredentials: {
     apiKey: string | null;
@@ -91,7 +91,7 @@ export async function GET() {
         redditConfig: {
           select: {
             enabled: true,
-            subreddit: true,
+            keywords: true,
           },
         },
         openRouterCredentials: {
@@ -140,7 +140,7 @@ export async function GET() {
             ? `u/${account.redditCredentials.username}`
             : null;
           hasApiKey = true; // Reddit doesn't need extra API key
-          hasSearchTerm = !!account.redditConfig?.subreddit?.trim(); // Subreddit is like search term
+          hasSearchTerm = !!account.redditConfig?.keywords?.trim(); // Keywords for search
           isAutomationEnabled = account.redditConfig?.enabled ?? false;
         }
 

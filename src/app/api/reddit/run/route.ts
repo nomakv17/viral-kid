@@ -19,6 +19,7 @@ interface RedditPost {
   id: string;
   name: string; // fullname like "t3_xxxxx"
   title: string;
+  selftext: string; // post body text
   author: string;
   subreddit: string;
   url: string;
@@ -88,13 +89,35 @@ async function refreshTokenIfNeeded(
   return data.access_token;
 }
 
-async function fetchHotPosts(
+async function searchPosts(
   accessToken: string,
-  subreddit: string,
+  keywords: string,
+  timeRange: string,
   limit: number = 25
 ): Promise<RedditPost[]> {
+  // Parse comma-separated keywords and join with OR for broader search
+  const keywordList = keywords
+    .split(",")
+    .map((k) => k.trim())
+    .filter((k) => k.length > 0);
+
+  if (keywordList.length === 0) {
+    return [];
+  }
+
+  // Join keywords with OR for Reddit search
+  const searchQuery = keywordList.join(" OR ");
+
+  const searchParams = new URLSearchParams({
+    q: searchQuery,
+    sort: "relevance",
+    t: timeRange, // hour, day, week, month
+    limit: limit.toString(),
+    type: "link", // Only posts, not comments
+  });
+
   const response = await fetch(
-    `${REDDIT_API_BASE}/r/${subreddit}/hot?limit=${limit}`,
+    `${REDDIT_API_BASE}/search?${searchParams.toString()}`,
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -104,7 +127,7 @@ async function fetchHotPosts(
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch posts: ${response.status}`);
+    throw new Error(`Failed to search posts: ${response.status}`);
   }
 
   const data = await response.json();
@@ -145,6 +168,7 @@ async function generateReplyWithLLM(
   model: string,
   systemPrompt: string,
   postTitle: string,
+  postBody: string,
   postAuthor: string,
   subreddit: string,
   styleOptions: {
@@ -172,6 +196,15 @@ async function generateReplyWithLLM(
     ...styleInstructions,
   ].join(" ");
 
+  // Build post content - include body if available
+  let postContent = `Title: "${postTitle}"`;
+  if (postBody && postBody.trim().length > 0) {
+    // Truncate body to avoid token limits
+    const truncatedBody =
+      postBody.length > 500 ? postBody.slice(0, 500) + "..." : postBody;
+    postContent += `\n\nPost content:\n${truncatedBody}`;
+  }
+
   const response = await fetch(
     "https://openrouter.ai/api/v1/chat/completions",
     {
@@ -188,7 +221,7 @@ async function generateReplyWithLLM(
           { role: "system", content: fullSystemPrompt },
           {
             role: "user",
-            content: `Write a comment for this Reddit post in r/${subreddit} by u/${postAuthor}:\n\nTitle: "${postTitle}"`,
+            content: `Write a comment for this Reddit post in r/${subreddit} by u/${postAuthor}:\n\n${postContent}`,
           },
         ],
         max_tokens: 150,
@@ -275,10 +308,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!redditConfig?.subreddit) {
-      await createLog(accountId, "error", "No subreddit configured");
+    if (!redditConfig?.keywords || redditConfig.keywords.trim() === "") {
+      await createLog(accountId, "error", "No keywords configured");
       return NextResponse.json(
-        { error: "No subreddit configured" },
+        { error: "No keywords configured" },
         { status: 400 }
       );
     }
@@ -323,23 +356,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch hot posts from subreddit
+    // Search for posts by keywords
+    const keywords = redditConfig.keywords;
+    const timeRange = redditConfig.timeRange || "day";
+
     let posts: RedditPost[];
     try {
-      posts = await fetchHotPosts(accessToken, redditConfig.subreddit);
+      posts = await searchPosts(accessToken, keywords, timeRange);
       await createLog(
         accountId,
         "info",
-        `Fetched ${posts.length} posts from r/${redditConfig.subreddit}`
+        `Found ${posts.length} posts for keywords: "${keywords}" (${timeRange})`
       );
     } catch (error) {
       await createLog(
         accountId,
         "error",
-        `Failed to fetch posts: ${error instanceof Error ? error.message : "Unknown error"}`
+        `Failed to search posts: ${error instanceof Error ? error.message : "Unknown error"}`
       );
       return NextResponse.json(
-        { error: "Failed to fetch posts" },
+        { error: "Failed to search posts" },
         { status: 500 }
       );
     }
@@ -398,6 +434,7 @@ export async function POST(request: Request) {
         openRouterCredentials.selectedModel,
         openRouterCredentials.systemPrompt || "",
         targetPost.title,
+        targetPost.selftext || "",
         targetPost.author,
         targetPost.subreddit,
         {

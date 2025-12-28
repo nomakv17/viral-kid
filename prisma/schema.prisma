@@ -320,7 +320,8 @@ model RedditConfiguration {
   id                String   @id @default(cuid())
   enabled           Boolean  @default(false) // Whether automation is active
   schedule          String   @default("every_hour") // every_5_min, every_10_min, every_30_min, every_hour, every_3_hours, every_6_hours
-  subreddit         String   @default("") // Which subreddit to monitor (without r/ prefix)
+  keywords          String   @default("") // Comma-separated keywords to search for
+  timeRange         String   @default("day") // hour, day, week, month
   minimumUpvotes    Int      @default(10) // Minimum upvotes filter for posts
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

@@ -28,7 +28,8 @@ export async function GET(request: Request) {
       id: config.id,
       enabled: config.enabled,
       schedule: config.schedule,
-      subreddit: config.subreddit,
+      keywords: config.keywords,
+      timeRange: config.timeRange,
       minimumUpvotes: config.minimumUpvotes,
     });
   } catch (error) {
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { schedule, subreddit, minimumUpvotes } = body;
+    const { schedule, keywords, timeRange, minimumUpvotes } = body;
 
     // Validate schedule value
     const validSchedules = [
@@ -68,6 +69,16 @@ export async function POST(request: Request) {
     if (schedule && !validSchedules.includes(schedule)) {
       return NextResponse.json(
         { error: "Invalid schedule value" },
+        { status: 400 }
+      );
+    }
+
+    // Validate timeRange value
+    const validTimeRanges = ["hour", "day", "week", "month"];
+
+    if (timeRange && !validTimeRanges.includes(timeRange)) {
+      return NextResponse.json(
+        { error: "Invalid timeRange value" },
         { status: 400 }
       );
     }
@@ -87,7 +98,8 @@ export async function POST(request: Request) {
       where: { accountId },
       data: {
         ...(schedule && { schedule }),
-        ...(subreddit !== undefined && { subreddit }),
+        ...(keywords !== undefined && { keywords }),
+        ...(timeRange && { timeRange }),
         ...(minimumUpvotes !== undefined && { minimumUpvotes }),
       },
     });
@@ -96,7 +108,8 @@ export async function POST(request: Request) {
       id: config.id,
       enabled: config.enabled,
       schedule: config.schedule,
-      subreddit: config.subreddit,
+      keywords: config.keywords,
+      timeRange: config.timeRange,
       minimumUpvotes: config.minimumUpvotes,
     });
   } catch (error) {
