@@ -4,11 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import {
-  dropdownVariants,
-  iconButtonHoverState,
-  buttonHoverState,
-} from "@/lib/animations";
+import { dropdownVariants } from "@/lib/animations";
+import { ModalButton } from "@/components/ui/modal-button";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -32,76 +30,6 @@ const TIME_RANGE_OPTIONS = [
   { value: "week", label: "Last week" },
   { value: "month", label: "Last month" },
 ];
-
-function ModalButton({
-  children,
-  onClick,
-  disabled,
-  variant = "secondary",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  variant?: "primary" | "secondary";
-}) {
-  const isPrimary = variant === "primary";
-
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="relative flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium"
-      style={{
-        color: disabled
-          ? "rgba(255,255,255,0.3)"
-          : isPrimary
-            ? "rgba(255,255,255,0.9)"
-            : "rgba(255,255,255,0.5)",
-        backgroundColor: disabled
-          ? "rgba(255,255,255,0.02)"
-          : isPrimary
-            ? "rgba(255,255,255,0.1)"
-            : "rgba(255,255,255,0.05)",
-        cursor: disabled ? "not-allowed" : "pointer",
-      }}
-      whileHover={disabled ? {} : buttonHoverState}
-      whileTap={disabled ? {} : { scale: 0.98 }}
-      transition={{ duration: 0.15 }}
-    >
-      {children}
-    </motion.button>
-  );
-}
-
-function IconButton({
-  icon,
-  onClick,
-  label,
-}: {
-  icon: React.ReactNode;
-  onClick?: () => void;
-  label: string;
-}) {
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      className="relative rounded-lg p-2"
-      style={{
-        color: "rgba(255,255,255,0.5)",
-        backgroundColor: "rgba(255,255,255,0)",
-      }}
-      whileHover={iconButtonHoverState}
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.15 }}
-      title={label}
-      aria-label={label}
-    >
-      {icon}
-    </motion.button>
-  );
-}
 
 export function SettingsModal({
   isOpen,
@@ -648,13 +576,18 @@ export function SettingsModal({
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 border-t border-white/10 pt-6">
-                  <ModalButton onClick={onClose} variant="secondary">
+                  <ModalButton
+                    onClick={onClose}
+                    variant="secondary"
+                    className="flex-1"
+                  >
                     Cancel
                   </ModalButton>
                   <ModalButton
                     onClick={handleSave}
                     disabled={isSaving}
                     variant="primary"
+                    className="flex-1"
                   >
                     {isSaving ? (
                       <>

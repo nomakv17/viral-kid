@@ -45,7 +45,14 @@ function RedditIcon({ className }: { className?: string }) {
 import { ConfirmModal } from "./confirm-modal";
 import { LogsModal } from "./logs-modal";
 import { DatabaseModal } from "./database-modal";
-import { iconButtonHoverState, buttonHoverState } from "@/lib/animations";
+import {
+  iconButtonHoverState,
+  buttonHoverState,
+  dangerIconButtonHoverState,
+  playButtonHoverState,
+  stopButtonHoverState,
+  testButtonHoverState,
+} from "@/lib/animations";
 
 interface SetupStatus {
   oauth: boolean;
@@ -105,34 +112,6 @@ const cardVariants = {
       duration: 0.2,
     },
   },
-};
-
-const dangerButtonHoverState = {
-  color: "rgba(239,68,68,1)",
-  backgroundColor: "rgba(239,68,68,0.15)",
-  boxShadow:
-    "0 2px 8px rgba(0,0,0,0.3), inset 0 0px 0px rgba(0,0,0,0), inset 0 1px 0 rgba(255,255,255,0.1)",
-};
-
-const playButtonHoverState = {
-  color: "rgba(34,197,94,1)",
-  backgroundColor: "rgba(34,197,94,0.15)",
-  boxShadow:
-    "0 2px 8px rgba(0,0,0,0.3), inset 0 0px 0px rgba(0,0,0,0), inset 0 1px 0 rgba(255,255,255,0.1)",
-};
-
-const stopButtonHoverState = {
-  color: "rgba(239,68,68,1)",
-  backgroundColor: "rgba(239,68,68,0.15)",
-  boxShadow:
-    "0 2px 8px rgba(0,0,0,0.3), inset 0 0px 0px rgba(0,0,0,0), inset 0 1px 0 rgba(255,255,255,0.1)",
-};
-
-const testButtonHoverState = {
-  color: "rgba(168,85,247,1)",
-  backgroundColor: "rgba(168,85,247,0.15)",
-  boxShadow:
-    "0 2px 8px rgba(0,0,0,0.3), inset 0 0px 0px rgba(0,0,0,0), inset 0 1px 0 rgba(255,255,255,0.1)",
 };
 
 function PlatformCard({
@@ -495,7 +474,7 @@ function ActionButton({
 }) {
   const getHoverState = () => {
     if (disabled) return {};
-    if (variant === "danger") return dangerButtonHoverState;
+    if (variant === "danger") return dangerIconButtonHoverState;
     if (variant === "play") return playButtonHoverState;
     if (variant === "stop") return stopButtonHoverState;
     if (variant === "test") return testButtonHoverState;

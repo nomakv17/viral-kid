@@ -12,7 +12,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { iconButtonHoverState } from "@/lib/animations";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface Log {
   id: string;
@@ -27,46 +27,6 @@ interface LogsModalProps {
   onClose: () => void;
   accountId: string;
   platform: "twitter" | "youtube" | "instagram" | "reddit";
-}
-
-const dangerButtonHoverState = {
-  color: "rgba(239,68,68,1)",
-  backgroundColor: "rgba(239,68,68,0.15)",
-  boxShadow:
-    "0 2px 8px rgba(0,0,0,0.3), inset 0 0px 0px rgba(0,0,0,0), inset 0 1px 0 rgba(255,255,255,0.1)",
-};
-
-function IconButton({
-  icon,
-  onClick,
-  label,
-  variant = "default",
-}: {
-  icon: React.ReactNode;
-  onClick?: () => void;
-  label: string;
-  variant?: "default" | "danger";
-}) {
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      className="relative rounded-lg p-2"
-      style={{
-        color: "rgba(255,255,255,0.5)",
-        backgroundColor: "rgba(255,255,255,0)",
-      }}
-      whileHover={
-        variant === "danger" ? dangerButtonHoverState : iconButtonHoverState
-      }
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.15 }}
-      title={label}
-      aria-label={label}
-    >
-      {icon}
-    </motion.button>
-  );
 }
 
 function LogLevelIcon({ level }: { level: Log["level"] }) {

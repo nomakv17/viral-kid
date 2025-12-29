@@ -2,7 +2,8 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X, AlertTriangle } from "lucide-react";
-import { iconButtonHoverState, buttonHoverState } from "@/lib/animations";
+import { ModalButton } from "@/components/ui/modal-button";
+import { IconButton } from "@/components/ui/icon-button";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -13,90 +14,6 @@ interface ConfirmModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: "danger" | "warning";
-}
-
-const dangerButtonHoverState = {
-  color: "rgba(255,255,255,1)",
-  backgroundColor: "rgba(239,68,68,0.4)",
-  boxShadow:
-    "0 2px 8px rgba(0,0,0,0.3), inset 0 0px 0px rgba(0,0,0,0), inset 0 1px 0 rgba(255,255,255,0.1)",
-};
-
-function ModalButton({
-  children,
-  onClick,
-  disabled,
-  variant = "secondary",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  variant?: "primary" | "secondary" | "danger";
-}) {
-  const isDanger = variant === "danger";
-  const isPrimary = variant === "primary";
-
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="relative flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium"
-      style={{
-        color: disabled
-          ? "rgba(255,255,255,0.3)"
-          : isDanger
-            ? "rgba(255,255,255,0.9)"
-            : isPrimary
-              ? "rgba(255,255,255,0.9)"
-              : "rgba(255,255,255,0.5)",
-        backgroundColor: disabled
-          ? "rgba(255,255,255,0.02)"
-          : isDanger
-            ? "rgba(239,68,68,0.3)"
-            : isPrimary
-              ? "rgba(255,255,255,0.1)"
-              : "rgba(255,255,255,0.05)",
-        cursor: disabled ? "not-allowed" : "pointer",
-      }}
-      whileHover={
-        disabled ? {} : isDanger ? dangerButtonHoverState : buttonHoverState
-      }
-      whileTap={disabled ? {} : { scale: 0.98 }}
-      transition={{ duration: 0.15 }}
-    >
-      {children}
-    </motion.button>
-  );
-}
-
-function IconButton({
-  icon,
-  onClick,
-  label,
-}: {
-  icon: React.ReactNode;
-  onClick?: () => void;
-  label: string;
-}) {
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      className="relative rounded-lg p-2"
-      style={{
-        color: "rgba(255,255,255,0.5)",
-        backgroundColor: "rgba(255,255,255,0)",
-      }}
-      whileHover={iconButtonHoverState}
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.15 }}
-      title={label}
-      aria-label={label}
-    >
-      {icon}
-    </motion.button>
-  );
 }
 
 export function ConfirmModal({
@@ -176,10 +93,18 @@ export function ConfirmModal({
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <ModalButton onClick={onClose} variant="secondary">
+                <ModalButton
+                  onClick={onClose}
+                  variant="secondary"
+                  className="flex-1"
+                >
                   {cancelLabel}
                 </ModalButton>
-                <ModalButton onClick={handleConfirm} variant="danger">
+                <ModalButton
+                  onClick={handleConfirm}
+                  variant="danger"
+                  className="flex-1"
+                >
                   {confirmLabel}
                 </ModalButton>
               </div>

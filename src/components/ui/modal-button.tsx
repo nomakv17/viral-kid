@@ -1,13 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { buttonHoverState } from "@/lib/animations";
+import { buttonHoverState, dangerButtonHoverState } from "@/lib/animations";
 
 interface ModalButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "danger";
   className?: string;
 }
 
@@ -18,7 +18,27 @@ export function ModalButton({
   variant = "secondary",
   className = "",
 }: ModalButtonProps) {
+  const isDanger = variant === "danger";
   const isPrimary = variant === "primary";
+
+  const getColor = () => {
+    if (disabled) return "var(--text-muted)";
+    if (isDanger || isPrimary) return "var(--text-primary)";
+    return "var(--text-secondary)";
+  };
+
+  const getBackgroundColor = () => {
+    if (disabled) return "var(--bg-disabled)";
+    if (isDanger) return "rgba(239,68,68,0.3)";
+    if (isPrimary) return "var(--bg-button)";
+    return "var(--bg-input)";
+  };
+
+  const getHoverState = () => {
+    if (disabled) return {};
+    if (isDanger) return dangerButtonHoverState;
+    return buttonHoverState;
+  };
 
   return (
     <motion.button
@@ -27,19 +47,11 @@ export function ModalButton({
       disabled={disabled}
       className={`relative flex items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium ${className}`}
       style={{
-        color: disabled
-          ? "rgba(255,255,255,0.3)"
-          : isPrimary
-            ? "rgba(255,255,255,0.9)"
-            : "rgba(255,255,255,0.5)",
-        backgroundColor: disabled
-          ? "rgba(255,255,255,0.02)"
-          : isPrimary
-            ? "rgba(255,255,255,0.1)"
-            : "rgba(255,255,255,0.05)",
+        color: getColor(),
+        backgroundColor: getBackgroundColor(),
         cursor: disabled ? "not-allowed" : "pointer",
       }}
-      whileHover={disabled ? {} : buttonHoverState}
+      whileHover={getHoverState()}
       whileTap={disabled ? {} : { scale: 0.98 }}
       transition={{ duration: 0.15 }}
     >

@@ -15,11 +15,10 @@ import {
   FileText,
 } from "lucide-react";
 import { SystemPromptModal } from "./system-prompt-modal";
-import {
-  dropdownVariants,
-  iconButtonHoverState,
-  buttonHoverState,
-} from "@/lib/animations";
+import { dropdownVariants } from "@/lib/animations";
+import { ModalButton } from "@/components/ui/modal-button";
+import { IconButton } from "@/components/ui/icon-button";
+import { CredentialInput } from "@/components/ui/credential-input";
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -60,125 +59,6 @@ function formatModelPrice(pricing?: string | null): string {
 
 function formatModelName(name: string): string {
   return name.replace(/^[^:]+:\s*/, "");
-}
-
-function ModalButton({
-  children,
-  onClick,
-  disabled,
-  variant = "secondary",
-  className = "",
-}: {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
-  variant?: "primary" | "secondary";
-  className?: string;
-}) {
-  const isPrimary = variant === "primary";
-
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`relative flex items-center justify-center gap-2 rounded-lg px-4 py-3 font-medium ${className}`}
-      style={{
-        color: disabled
-          ? "rgba(255,255,255,0.3)"
-          : isPrimary
-            ? "rgba(255,255,255,0.9)"
-            : "rgba(255,255,255,0.5)",
-        backgroundColor: disabled
-          ? "rgba(255,255,255,0.02)"
-          : isPrimary
-            ? "rgba(255,255,255,0.1)"
-            : "rgba(255,255,255,0.05)",
-        cursor: disabled ? "not-allowed" : "pointer",
-      }}
-      whileHover={disabled ? {} : buttonHoverState}
-      whileTap={disabled ? {} : { scale: 0.98 }}
-      transition={{ duration: 0.15 }}
-    >
-      {children}
-    </motion.button>
-  );
-}
-
-function IconButton({
-  icon,
-  onClick,
-  label,
-}: {
-  icon: React.ReactNode;
-  onClick?: () => void;
-  label: string;
-}) {
-  return (
-    <motion.button
-      type="button"
-      onClick={onClick}
-      className="relative rounded-lg p-2"
-      style={{
-        color: "rgba(255,255,255,0.5)",
-        backgroundColor: "rgba(255,255,255,0)",
-      }}
-      whileHover={iconButtonHoverState}
-      whileTap={{ scale: 0.95 }}
-      transition={{ duration: 0.15 }}
-      title={label}
-      aria-label={label}
-    >
-      {icon}
-    </motion.button>
-  );
-}
-
-function CredentialInput({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-  type = "text",
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  type?: "text" | "password";
-}) {
-  return (
-    <div className="mb-4">
-      <label
-        htmlFor={id}
-        className="mb-2 block text-sm font-semibold tracking-wide text-white/90"
-      >
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-lg border px-4 py-3 text-white/90 outline-none backdrop-blur-xl transition-all duration-200"
-        style={{
-          background: "rgba(255,255,255,0.05)",
-          borderColor: "rgba(255,255,255,0.1)",
-        }}
-        onFocus={(e) => {
-          e.target.style.borderColor = "rgba(255,255,255,0.3)";
-          e.target.style.background = "rgba(255,255,255,0.08)";
-        }}
-        onBlur={(e) => {
-          e.target.style.borderColor = "rgba(255,255,255,0.1)";
-          e.target.style.background = "rgba(255,255,255,0.05)";
-        }}
-      />
-    </div>
-  );
 }
 
 export function AccountModal({

@@ -33,16 +33,16 @@ export function CredentialInput({
         placeholder={placeholder}
         className="w-full rounded-lg border px-4 py-3 text-white/90 outline-none backdrop-blur-xl transition-all duration-200"
         style={{
-          background: "rgba(255,255,255,0.05)",
-          borderColor: "rgba(255,255,255,0.1)",
+          background: "var(--bg-input)",
+          borderColor: "var(--border-light)",
         }}
         onFocus={(e) => {
-          e.target.style.borderColor = "rgba(255,255,255,0.3)";
-          e.target.style.background = "rgba(255,255,255,0.08)";
+          e.target.style.borderColor = "var(--border-focus)";
+          e.target.style.background = "var(--bg-input-hover)";
         }}
         onBlur={(e) => {
-          e.target.style.borderColor = "rgba(255,255,255,0.1)";
-          e.target.style.background = "rgba(255,255,255,0.05)";
+          e.target.style.borderColor = "var(--border-light)";
+          e.target.style.background = "var(--bg-input)";
         }}
       />
     </div>
