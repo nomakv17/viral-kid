@@ -15,12 +15,7 @@ import {
   FileText,
 } from "lucide-react";
 import { SystemPromptModal } from "./system-prompt-modal";
-import {
-  modalVariants,
-  modalContainerVariants,
-  iconButtonHoverState,
-  buttonHoverState,
-} from "@/lib/animations";
+import { iconButtonHoverState, buttonHoverState } from "@/lib/animations";
 
 interface YouTubeAccountModalProps {
   isOpen: boolean;
@@ -441,22 +436,12 @@ export function YouTubeAccountModal({
   };
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {isOpen && (
-        <motion.div
-          key="youtube-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          variants={modalContainerVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <motion.div
+          <div
             className="absolute inset-0 z-0 bg-black/80 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
             onClick={onClose}
           />
 
@@ -472,10 +457,10 @@ export function YouTubeAccountModal({
               backdropFilter: "blur(24px)",
               WebkitBackdropFilter: "blur(24px)",
             }}
-            variants={modalVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
           >
             {/* Header */}
             <div
@@ -986,7 +971,7 @@ export function YouTubeAccountModal({
             accountId={accountId}
             platform="youtube"
           />
-        </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

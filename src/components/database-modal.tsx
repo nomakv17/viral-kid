@@ -13,11 +13,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import {
-  modalVariants,
-  modalContainerVariants,
-  iconButtonHoverState,
-} from "@/lib/animations";
+import { iconButtonHoverState } from "@/lib/animations";
 
 interface TweetInteraction {
   id: string;
@@ -252,22 +248,12 @@ export function DatabaseModal({
         : "Instagram";
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {isOpen && (
-        <motion.div
-          key="database-modal"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          variants={modalContainerVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <motion.div
+          <div
             className="absolute inset-0 z-0 bg-black/80 backdrop-blur-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
             onClick={onClose}
           />
 
@@ -284,10 +270,10 @@ export function DatabaseModal({
               backdropFilter: "blur(24px)",
               WebkitBackdropFilter: "blur(24px)",
             }}
-            variants={modalVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
           >
             {/* Header */}
             <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-4">
@@ -405,7 +391,7 @@ export function DatabaseModal({
               )}
             </div>
           </motion.div>
-        </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );
