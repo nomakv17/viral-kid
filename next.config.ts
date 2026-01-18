@@ -7,7 +7,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.twitter.com https://api.x.com https://www.googleapis.com https://oauth2.googleapis.com https://oauth.reddit.com https://www.reddit.com https://graph.instagram.com https://graph.facebook.com https://api.instagram.com https://openrouter.ai",
+  "connect-src 'self' https://api.twitter.com https://api.x.com https://www.googleapis.com https://oauth2.googleapis.com https://oauth.reddit.com https://www.reddit.com https://graph.instagram.com https://graph.facebook.com https://api.instagram.com https://openrouter.ai https://ruucm.github.io",
   "frame-src 'self'",
   "frame-ancestors 'self'",
   "form-action 'self'",
