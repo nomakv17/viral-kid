@@ -18,11 +18,14 @@ RUN npx prisma generate
 # Copy application code
 COPY . .
 
+# Make entrypoint executable
+RUN chmod +x docker-entrypoint.sh
+
 # Build the application
 RUN npm run build
 
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "run", "start"]
+# Start the application (MODE=worker runs BullMQ worker instead)
+ENTRYPOINT ["./docker-entrypoint.sh"]
