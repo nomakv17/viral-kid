@@ -55,7 +55,7 @@ Open [localhost:3000](http://localhost:3000) to access the dashboard.
 
 Built by [Ken](https://github.com/KenKaiii)
 
-- [YouTube](https://www.youtube.com/@KenKaiii)
+- [YouTube](https://www.youtube.com/@kenkaidoesai)
 - [Skool Community](https://www.skool.com/kenkai)
 
 ## License
