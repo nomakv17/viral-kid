@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { TwitterApi } from "twitter-api-v2";
 import { db } from "@/lib/db";
-import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/utils";
 
 export async function GET(request: Request) {
   try {
@@ -26,10 +26,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const headersList = await headers();
-    const host = headersList.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const callbackUrl = `${protocol}://${host}/api/twitter/callback`;
+    const callbackUrl = `${getBaseUrl(request)}/api/twitter/callback`;
 
     const client = new TwitterApi({
       clientId: credentials.clientId,

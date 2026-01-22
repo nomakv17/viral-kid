@@ -8,15 +8,24 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Get the base URL dynamically from request headers or environment variables.
  * Works on any port in development and production.
+ * Properly handles reverse proxies (Railway, Vercel, etc.) that set x-forwarded-* headers.
  */
 export function getBaseUrl(request?: Request): string {
   // If we have a request, extract URL from headers
   if (request) {
-    const host = request.headers.get("host");
-    const protocol = request.headers.get("x-forwarded-proto") || "http";
+    // Check x-forwarded-host first (set by reverse proxies like Railway)
+    const forwardedHost = request.headers.get("x-forwarded-host");
+    const host = forwardedHost || request.headers.get("host");
+    const protocol = request.headers.get("x-forwarded-proto") || "https";
+
     if (host) {
       return `${protocol}://${host}`;
     }
+  }
+
+  // Railway deployment
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
   }
 
   // Vercel deployment

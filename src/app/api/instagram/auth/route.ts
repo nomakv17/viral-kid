@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getBaseUrl } from "@/lib/utils";
 
 // Facebook OAuth 2.0 endpoint (Instagram uses Facebook Login)
 const FACEBOOK_AUTH_URL = "https://www.facebook.com/v21.0/dialog/oauth";
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const callbackUrl = `${reqUrl.origin}/api/instagram/callback`;
+    const callbackUrl = `${getBaseUrl(request)}/api/instagram/callback`;
 
     // Generate state for CSRF protection
     const state = generateState();

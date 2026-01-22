@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getBaseUrl } from "@/lib/utils";
 
 // Google OAuth 2.0 endpoints
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const callbackUrl = `${reqUrl.origin}/api/youtube/callback`;
+    const callbackUrl = `${getBaseUrl(request)}/api/youtube/callback`;
 
     // Generate state for CSRF protection
     const state = generateState();

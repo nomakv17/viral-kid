@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getBaseUrl } from "@/lib/utils";
 
 // Reddit OAuth 2.0 endpoints
 const REDDIT_AUTH_URL = "https://www.reddit.com/api/v1/authorize";
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const callbackUrl = `${reqUrl.origin}/api/reddit/callback`;
+    const callbackUrl = `${getBaseUrl(request)}/api/reddit/callback`;
 
     // Generate state for CSRF protection
     const state = generateState();
