@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -71,6 +72,29 @@ export function InstagramAutomationForm({
 
   const isEditing = !!automation;
 
+  const fetchPosts = useCallback(async () => {
+    setIsLoadingPosts(true);
+    try {
+      const res = await fetch(`/api/instagram/posts?accountId=${accountId}`);
+      if (!res.ok) {
+        const data = await res.json();
+        if (res.status === 400 && data.error?.includes("not connected")) {
+          toast.error("Connect your Instagram account first");
+        } else {
+          toast.error(data.error || "Failed to load posts");
+        }
+        return;
+      }
+      const data = await res.json();
+      setPosts(data);
+    } catch (err) {
+      console.error("Failed to fetch posts:", err);
+      toast.error("Failed to load posts");
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, [accountId]);
+
   useEffect(() => {
     if (isOpen && accountId) {
       fetchPosts();
@@ -91,7 +115,7 @@ export function InstagramAutomationForm({
         setDmDelay(60);
       }
     }
-  }, [isOpen, accountId, automation]);
+  }, [isOpen, accountId, automation, fetchPosts]);
 
   // Set selectedPost for editing after posts load
   useEffect(() => {
@@ -119,29 +143,6 @@ export function InstagramAutomationForm({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isPostDropdownOpen]);
-
-  const fetchPosts = async () => {
-    setIsLoadingPosts(true);
-    try {
-      const res = await fetch(`/api/instagram/posts?accountId=${accountId}`);
-      if (!res.ok) {
-        const data = await res.json();
-        if (res.status === 400 && data.error?.includes("not connected")) {
-          toast.error("Connect your Instagram account first");
-        } else {
-          toast.error(data.error || "Failed to load posts");
-        }
-        return;
-      }
-      const data = await res.json();
-      setPosts(data);
-    } catch (err) {
-      console.error("Failed to fetch posts:", err);
-      toast.error("Failed to load posts");
-    } finally {
-      setIsLoadingPosts(false);
-    }
-  };
 
   const parseTemplatesForEdit = (json: string): string => {
     try {
@@ -314,13 +315,17 @@ export function InstagramAutomationForm({
                               <>
                                 {selectedPost.media_url ||
                                 selectedPost.thumbnail_url ? (
-                                  <img
+                                  <Image
                                     src={
                                       selectedPost.thumbnail_url ||
-                                      selectedPost.media_url
+                                      selectedPost.media_url ||
+                                      ""
                                     }
                                     alt=""
+                                    width={32}
+                                    height={32}
                                     className="h-8 w-8 rounded object-cover"
+                                    unoptimized
                                   />
                                 ) : (
                                   <div className="flex h-8 w-8 items-center justify-center rounded bg-white/10">
@@ -414,12 +419,17 @@ export function InstagramAutomationForm({
                                       }}
                                     >
                                       {post.media_url || post.thumbnail_url ? (
-                                        <img
+                                        <Image
                                           src={
-                                            post.thumbnail_url || post.media_url
+                                            post.thumbnail_url ||
+                                            post.media_url ||
+                                            ""
                                           }
                                           alt=""
+                                          width={40}
+                                          height={40}
                                           className="h-10 w-10 rounded object-cover"
+                                          unoptimized
                                         />
                                       ) : (
                                         <div className="flex h-10 w-10 items-center justify-center rounded bg-white/10">

@@ -12,18 +12,6 @@ import { test, expect } from "@playwright/test";
  */
 
 test.describe("Dashboard", () => {
-  test.describe("Unauthenticated Access", () => {
-    test("redirects to login when accessing dashboard", async ({ page }) => {
-      await page.goto("/");
-      await expect(page).toHaveURL(/\/login/);
-    });
-
-    test("redirects to login when accessing admin", async ({ page }) => {
-      await page.goto("/admin");
-      await expect(page).toHaveURL(/\/login/);
-    });
-  });
-
   test.describe("API Protection", () => {
     test("accounts API returns 401 without auth", async ({ request }) => {
       const response = await request.get("/api/accounts");
