@@ -1,123 +1,103 @@
-# viral-kid
+# CLAUDE.md
 
-A Next.js application for tracking viral content across social platforms (Twitter, YouTube, Reddit, Instagram) with automated reply pipelines and PostgreSQL storage.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Project Structure
+## Overview
 
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── api/                # API routes
-│   │   ├── auth/           # NextAuth.js authentication
-│   │   ├── cron/           # Vercel cron job endpoints
-│   │   ├── twitter/        # Twitter OAuth & operations
-│   │   ├── youtube/        # YouTube OAuth & operations
-│   │   ├── reddit/         # Reddit OAuth & operations
-│   │   ├── instagram/      # Instagram OAuth & operations
-│   │   ├── openrouter/     # AI model integration
-│   │   └── accounts/       # Account management
-│   ├── login/              # Login page
-│   └── page.tsx            # Main dashboard
-├── components/             # React components
-│   └── ui/                 # Reusable UI elements
-├── lib/                    # Utilities and helpers
-│   ├── jobs/               # BullMQ job queue system
-│   ├── twitter/            # Twitter API client
-│   └── youtube/            # YouTube API client
-├── types/                  # TypeScript type definitions
-└── generated/              # Auto-generated Prisma client (do not edit)
+viral-kid is a Next.js 16 / React 19 social media monitoring and automation dashboard. It tracks viral content across Twitter, YouTube, Reddit, and Instagram, with multi-account OAuth management and AI-powered automated reply pipelines.
 
-prisma/                     # Database schema and migrations
-.claude/commands/           # Claude Code slash commands
-```
-
-## Organization Rules
-
-**Keep code organized and modularized:**
-
-- API routes → `src/app/api/`, one file per route/resource
-- Components → `src/components/`, one component per file
-- Utilities → `src/lib/`, grouped by functionality
-- Types → `src/types/` or co-located with usage
-
-**Modularity principles:**
-
-- Single responsibility per file
-- Clear, descriptive file names
-- Group related functionality together
-- Avoid monolithic files
-
-## Code Quality - Zero Tolerance
-
-After editing ANY file, run:
+## Commands
 
 ```bash
-npm run check
+# Development
+npm run dev              # Start dev server (Turbopack)
+npm run worker:dev       # Start BullMQ worker (watch mode)
+
+# Quality checks - run after editing ANY file
+npm run check            # typecheck + lint + format (ZERO TOLERANCE)
+npm run typecheck        # TypeScript only
+npm run lint             # ESLint with auto-fix
+npm run format           # Prettier with auto-fix
+
+# Database
+npm run db:generate      # Generate Prisma client
+npm run db:migrate       # Run migrations
+npm run db:push          # Push schema to DB (no migration)
+npm run db:studio        # Open Prisma Studio
+
+# Testing
+npm run test             # Vitest watch mode
+npm run test:run         # Vitest single run
+npm run test:e2e         # Playwright E2E tests
 ```
 
-This runs typecheck + lint + format checks. Fix ALL errors before continuing.
+## Architecture
 
-Individual commands:
+### API Structure
 
-```bash
-npm run typecheck    # TypeScript check
-npm run lint         # ESLint (auto-fix)
-npm run format       # Prettier (auto-fix)
+Each social platform has its own API module under `src/app/api/{platform}/`:
+
+- `credentials/` - Store/retrieve platform API keys
+- `oauth/` - OAuth flow endpoints
+- `automations/` - Automation configuration CRUD
+- Platform-specific endpoints (trending, replies, comments, etc.)
+
+### Data Layer
+
+- **Prisma ORM** with PostgreSQL - schema in `prisma/schema.prisma`
+- **Multi-tenancy** via `userId` foreign key on all models
+- **Per-platform credentials** stored in dedicated tables (TwitterCredentials, YouTubeCredentials, etc.)
+- **Generated client** in `src/generated/prisma/` - do not edit
+
+### Background Jobs
+
+Two options for scheduled tasks:
+
+1. **BullMQ Worker** (self-hosted, requires Redis)
+   - Jobs defined in `src/lib/jobs/`
+   - Add new jobs: `types.ts` → `processors.ts` → `queues.ts`
+
+2. **Vercel Cron** (serverless)
+   - Endpoints in `src/app/api/cron/`
+   - Configured in `vercel.json`
+
+### Key Directories
+
 ```
-
-## Database
-
-```bash
-npm run db:generate  # Generate Prisma client
-npm run db:migrate   # Run migrations
-npm run db:studio    # Open Prisma Studio
+src/lib/{platform}/     # Platform-specific API clients and utilities
+src/lib/jobs/           # BullMQ job definitions and processors
+src/components/ui/      # shadcn/ui components (TailwindCSS v4)
+prisma/migrations/      # Database migration history
 ```
 
 ## Environment Variables
 
-Required in `.env`:
+Required:
 
 - `DATABASE_URL` - PostgreSQL connection string
-- `AUTH_SECRET` - NextAuth.js session encryption (generate with `openssl rand -base64 32`)
+- `AUTH_SECRET` - NextAuth.js session encryption
 
-Optional (platform-specific credentials stored per-account in database):
+Optional:
 
-- `REDIS_URL` - Redis connection string (default: `redis://localhost:6379`)
+- `REDIS_URL` - For BullMQ (default: `redis://localhost:6379`)
 - `CRON_SECRET` - Vercel cron authentication
 
-## Dev Server
+## Testing
+
+Unit tests are co-located with source files (`.test.ts` suffix). E2E tests in `e2e/`.
 
 ```bash
-npm run dev
+# Run single test file
+npx vitest run src/lib/validation.test.ts
+
+# Run tests matching pattern
+npx vitest run -t "rate limiter"
 ```
 
-Uses Turbopack for fast refresh. Read terminal output for errors.
+## Slash Commands
 
-## Scheduled Jobs
+Custom Claude Code commands in `.claude/commands/`:
 
-Two options for running scheduled tasks:
-
-### Option 1: BullMQ Worker (self-hosted)
-
-Requires Redis. Run the worker process alongside your app:
-
-```bash
-npm run worker        # Production
-npm run worker:dev    # Development (with watch mode)
-```
-
-Jobs are defined in `src/lib/jobs/`. Add new job types in:
-
-- `types.ts` - Job data interfaces
-- `processors.ts` - Job handler functions
-- `queues.ts` - Queue scheduling
-
-### Option 2: Vercel Cron (serverless)
-
-Configured in `vercel.json`. Cron endpoints in `src/app/api/cron/`:
-
-- `/api/cron/twitter-trends` - Hourly
-- `/api/cron/youtube-trends` - Every 2 hours
-- `/api/cron/cleanup` - Daily at 3 AM
-
-Set `CRON_SECRET` in Vercel environment variables for authentication.
+- `/commit` - Run checks, generate commit message, push
+- `/fix` - Parallel agents to fix type/lint/format errors
+- `/update-app` - Update dependencies, fix deprecations
